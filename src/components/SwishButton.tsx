@@ -3,60 +3,46 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { useEffect, useState } from 'react'
+import { useSwishQrCode } from '@/hooks/useSwishQrCode'
+import { useState } from 'react'
 
-export function SwishButton() {
+export function SwishButton({
+  amount,
+  message = '',
+}: {
+  amount: number
+  message?: string
+}) {
+  const [getQrCode, gettingQrCode, qrError] = useSwishQrCode()
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetch('https://mpc.getswish.net/qrg-swish/api/v1/prefilled', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        format: 'png',
-        payee: {
-          value: '0737558100',
-          editable: false,
-        },
-        amount: {
-          value: 500,
-          editable: false,
-        },
-        message: {
-          value: '10st öl',
-          editable: false,
-        },
-        size: 300,
-      }),
-    }).then(async (res) => {
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      setQrCodeUrl(url)
-    })
-  }, [])
+  async function handlePay() {
+    const qrCodeUrl = await getQrCode(amount, message)
+    setQrCodeUrl(qrCodeUrl)
+  }
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">Betala med Swish</Button>
+        <Button variant="outline" onClick={handlePay}>
+          Betala med Swish
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Betala med Swish</DialogTitle>
-          <DialogDescription>
-            Anyone who has this link will be able to view this.
-          </DialogDescription>
         </DialogHeader>
-        <div className="flex items-center gap-2">
-          <img src={qrCodeUrl || ''} alt="Swish QR Code" />
+        <div className="flex items-center justify-center gap-2">
+          {gettingQrCode && <p>Hämtar QR-kod, vänta...</p>}
+          {!gettingQrCode && qrCodeUrl && (
+            <img src={qrCodeUrl || ''} alt="Swish QR Code" />
+          )}
+          {!gettingQrCode && qrError && <p>{qrError.message}</p>}
         </div>
         <DialogFooter className="sm:justify-start">
           <DialogClose asChild>

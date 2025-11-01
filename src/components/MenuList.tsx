@@ -21,16 +21,13 @@ export function MenuList() {
   return (
     <ItemGroup>
       {menu.items.map((item) => (
-        <>
-          <MenuListItem key={item.id} {...item} />
-          <ItemSeparator />
-        </>
+        <MenuListItem key={item.id} {...item} />
       ))}
       <div className="text-2xl h-16 pt-2 text-center">
         Totalt: <span className="bold">{total} kr</span>
       </div>
       <Button className="w-full">Betala med Swish</Button>
-      <SwishButton />
+      <SwishButton amount={total} />
     </ItemGroup>
   )
 }
@@ -60,6 +57,7 @@ export function MenuListItem(item: MenuItem) {
           <Plus />
         </Button>
       </ItemActions>
+      <ItemSeparator />
     </Item>
   )
 }
