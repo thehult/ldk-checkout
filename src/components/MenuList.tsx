@@ -17,13 +17,9 @@ import { SwishButton } from './SwishButton'
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group'
 import { useState } from 'react'
 import React from 'react'
+import { CATEGORIES } from '@/data/categories'
 
-const availableCategories: Record<ProductCategory, string> = {
-  drink: 'Dryck',
-  food: 'Mat',
-  darts: 'Dart',
-  ldk: 'Merch',
-}
+const availableCategories = CATEGORIES
 
 const allAvailableCategories = Object.keys(
   availableCategories,
