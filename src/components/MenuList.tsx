@@ -5,7 +5,6 @@ import {
   ItemContent,
   ItemDescription,
   ItemGroup,
-  ItemHeader,
   ItemSeparator,
   ItemTitle,
 } from './ui/item'

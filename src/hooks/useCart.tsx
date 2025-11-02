@@ -1,5 +1,6 @@
 import type { MenuItem, ProductNumber } from '@/models/Menu'
 import { create } from 'zustand'
+import { persist, type StorageValue } from 'zustand/middleware'
 
 interface CartState {
   cart: Map<ProductNumber, number>
@@ -26,46 +27,91 @@ export function calculateTotal(
   return total
 }
 
-export const useCart = create<CartState>()((set) => ({
-  cart: new Map(),
-  menuItems: new Map(),
-  total: 0,
-  addProduct: (menuItem: MenuItem) =>
-    set((state) => {
-      const newMenuItems = new Map(state.menuItems)
-      newMenuItems.set(menuItem.id, menuItem)
-
-      const currentQuantity = state.cart.get(menuItem.id) || 0
-      const newCart = new Map(state.cart)
-      newCart.set(menuItem.id, currentQuantity + 1)
-
-      return {
-        cart: newCart,
-        menuItems: newMenuItems,
-        total: calculateTotal(newCart, newMenuItems),
-      }
-    }),
-  subProduct: (menuItem: MenuItem) =>
-    set((state) => {
-      const currentQuantity = state.cart.get(menuItem.id) || 0
-      const newCart = new Map(state.cart)
-      if (currentQuantity > 1) {
-        newCart.set(menuItem.id, currentQuantity - 1)
-      } else {
-        newCart.delete(menuItem.id)
-      }
-      return { cart: newCart, total: calculateTotal(newCart, state.menuItems) }
-    }),
-  removeProduct: (menuItem: MenuItem) =>
-    set((state) => {
-      const newCart = new Map(state.cart)
-      newCart.delete(menuItem.id)
-      return { cart: newCart, total: calculateTotal(newCart, state.menuItems) }
-    }),
-  clear: () =>
-    set(() => ({
+export const useCart = create<CartState>()(
+  persist(
+    (set, get) => ({
       cart: new Map(),
       menuItems: new Map(),
       total: 0,
-    })),
-}))
+      addProduct: (menuItem: MenuItem) => {
+        const newMenuItems = new Map(get().menuItems)
+        newMenuItems.set(menuItem.id, menuItem)
+
+        const currentQuantity = get().cart.get(menuItem.id) || 0
+        const newCart = new Map(get().cart)
+        newCart.set(menuItem.id, currentQuantity + 1)
+        console.log(
+          'Added product',
+          menuItem.name,
+          'New quantity:',
+          currentQuantity + 1,
+          'Cart:',
+          newCart,
+        )
+        set({
+          cart: newCart,
+          menuItems: newMenuItems,
+          total: calculateTotal(newCart, newMenuItems),
+        })
+      },
+      subProduct: (menuItem: MenuItem) => {
+        const currentQuantity = get().cart.get(menuItem.id) || 0
+        const newCart = new Map(get().cart)
+        if (currentQuantity > 1) {
+          newCart.set(menuItem.id, currentQuantity - 1)
+        } else {
+          newCart.delete(menuItem.id)
+        }
+        set({
+          cart: newCart,
+          total: calculateTotal(newCart, get().menuItems),
+        })
+      },
+      removeProduct: (menuItem: MenuItem) => {
+        const newCart = new Map(get().cart)
+        newCart.delete(menuItem.id)
+        set({
+          cart: newCart,
+          total: calculateTotal(newCart, get().menuItems),
+        })
+      },
+      clear: () =>
+        set({
+          cart: new Map(),
+          menuItems: new Map(),
+          total: 0,
+        }),
+    }),
+    {
+      name: 'cart-storage',
+      storage: {
+        getItem: (name) => {
+          const str = localStorage.getItem(name)
+          if (!str) return null
+          const existingValue = JSON.parse(str)
+          return {
+            ...existingValue,
+            state: {
+              ...existingValue.state,
+              cart: new Map(existingValue.state.cart),
+              menuItems: new Map(existingValue.state.menuItems),
+            },
+          }
+        },
+        setItem: (name, newValue: StorageValue<CartState>) => {
+          // functions cannot be JSON encoded
+          const str = JSON.stringify({
+            ...newValue,
+            state: {
+              ...newValue.state,
+              cart: Array.from(newValue.state.cart.entries()),
+              menuItems: Array.from(newValue.state.menuItems.entries()),
+            },
+          })
+          localStorage.setItem(name, str)
+        },
+        removeItem: (name) => localStorage.removeItem(name),
+      },
+    },
+  ),
+)
