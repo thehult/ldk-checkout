@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog'
 import { useSwishQrCode } from '@/hooks/useSwishQrCode'
 import { useState } from 'react'
+import { Spinner } from './ui/spinner'
 
 export function SwishButton({
   amount,
@@ -41,7 +42,7 @@ export function SwishButton({
           <DialogTitle>Betala med Swish</DialogTitle>
         </DialogHeader>
         <div className="flex items-center justify-center gap-2">
-          {gettingQrCode && <p>Hämtar QR-kod, vänta...</p>}
+          {gettingQrCode && <Spinner className="size-8 text-primary" />}
           {!gettingQrCode && qrCodeUrl && (
             <img src={qrCodeUrl || ''} alt="Swish QR Code" />
           )}

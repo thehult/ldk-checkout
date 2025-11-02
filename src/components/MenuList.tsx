@@ -5,26 +5,88 @@ import {
   ItemContent,
   ItemDescription,
   ItemGroup,
+  ItemHeader,
   ItemSeparator,
   ItemTitle,
 } from './ui/item'
 import { Button } from './ui/button'
 import { Minus, Plus } from 'lucide-react'
-import type { MenuItem } from '@/models/Menu'
+import type { MenuItem, ProductCategory } from '@/models/Menu'
 import { useCart } from '@/hooks/useCart'
 import { SwishButton } from './SwishButton'
+import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group'
+import { useState } from 'react'
+import React from 'react'
+
+const availableCategories: Record<ProductCategory, string> = {
+  drink: 'Dryck',
+  food: 'Mat',
+  darts: 'Dart',
+  ldk: 'Merch',
+}
+
+const allAvailableCategories = Object.keys(
+  availableCategories,
+) as ProductCategory[]
 
 export function MenuList() {
   const menu = useMenu()
   const total = useCart((state) => state.total)
   const clearCart = useCart((state) => state.clear)
+  const [selectedCategories, setSelectedCategories] = useState<
+    ProductCategory[]
+  >(allAvailableCategories)
+
+  const handleCategorySelectionChanged = (value: ProductCategory[]) => {
+    if (value.length === 0) {
+      setSelectedCategories(allAvailableCategories)
+      return
+    }
+    setSelectedCategories(value)
+  }
 
   return (
     <ItemGroup>
       <div className="text-2xl h-16 pt-2 text-center bold">Meny</div>
-      {menu.items.map((item) => (
-        <MenuListItem key={item.id} {...item} />
-      ))}
+      <ToggleGroup
+        type="multiple"
+        variant="outline"
+        spacing={2}
+        size="lg"
+        className="self-center"
+        onValueChange={handleCategorySelectionChanged}
+      >
+        {Object.entries(availableCategories).map(([category, label]) => (
+          <ToggleGroupItem
+            value={category}
+            aria-label={`Toggle ${category}`}
+            key={category}
+            className="hover:cursor-pointer"
+          >
+            {label}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+
+      {Object.entries(availableCategories)
+        .filter(([category]) =>
+          selectedCategories.includes(category as ProductCategory),
+        )
+        .map(([category, label]) => (
+          <React.Fragment key={category}>
+            <Item size="sm">
+              <ItemContent>
+                <ItemTitle className="text-md">{label}</ItemTitle>
+              </ItemContent>
+            </Item>
+            {menu.items
+              .filter((v) => v.category === category)
+              .map((item) => (
+                <MenuListItem key={item.id} {...item} />
+              ))}
+          </React.Fragment>
+        ))}
+
       <div className="text-2xl h-16 pt-2 text-center">
         Totalt: <span className="bold">{total} kr</span>
       </div>
