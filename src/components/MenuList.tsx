@@ -17,6 +17,7 @@ import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group'
 import { useState } from 'react'
 import React from 'react'
 import { CATEGORIES } from '@/data/categories'
+import { AddToTabButton } from './AddToTabButton'
 
 const availableCategories = CATEGORIES
 
@@ -87,6 +88,7 @@ export function MenuList() {
       </div>
       <div className="flex flex-col gap-2">
         <SwishButton amount={total} onPaid={() => clearCart()} />
+        {/* <AddToTabButton /> */}
         <Button
           variant={'outline'}
           onClick={() => clearCart()}

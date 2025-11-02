@@ -2,7 +2,7 @@ import type { MenuItem, ProductNumber } from '@/models/Menu'
 import { create } from 'zustand'
 import { persist, type StorageValue } from 'zustand/middleware'
 
-interface CartState {
+export interface CartState {
   cart: Map<ProductNumber, number>
   menuItems: Map<ProductNumber, MenuItem>
   total: number
@@ -10,6 +10,14 @@ interface CartState {
   subProduct: (menuItem: MenuItem) => void
   removeProduct: (menuItem: MenuItem) => void
   clear: () => void
+  serialize: () => SerializedCartState
+  deserialize: (data: SerializedCartState) => void
+}
+
+export interface SerializedCartState {
+  cart: [ProductNumber, number][]
+  menuItems: [ProductNumber, MenuItem][]
+  total: number
 }
 
 export function calculateTotal(
@@ -40,14 +48,6 @@ export const useCart = create<CartState>()(
         const currentQuantity = get().cart.get(menuItem.id) || 0
         const newCart = new Map(get().cart)
         newCart.set(menuItem.id, currentQuantity + 1)
-        console.log(
-          'Added product',
-          menuItem.name,
-          'New quantity:',
-          currentQuantity + 1,
-          'Cart:',
-          newCart,
-        )
         set({
           cart: newCart,
           menuItems: newMenuItems,
@@ -81,6 +81,21 @@ export const useCart = create<CartState>()(
           menuItems: new Map(),
           total: 0,
         }),
+      serialize: () => {
+        const state = get()
+        return {
+          cart: Array.from(state.cart.entries()),
+          menuItems: Array.from(state.menuItems.entries()),
+          total: state.total,
+        }
+      },
+      deserialize: (data: SerializedCartState) => {
+        set({
+          cart: new Map(data.cart),
+          menuItems: new Map(data.menuItems),
+          total: data.total,
+        })
+      },
     }),
     {
       name: 'cart-storage',
