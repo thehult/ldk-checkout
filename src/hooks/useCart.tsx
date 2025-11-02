@@ -8,6 +8,7 @@ interface CartState {
   addProduct: (menuItem: MenuItem) => void
   subProduct: (menuItem: MenuItem) => void
   removeProduct: (menuItem: MenuItem) => void
+  clear: () => void
 }
 
 export function calculateTotal(
@@ -61,4 +62,10 @@ export const useCart = create<CartState>()((set) => ({
       newCart.delete(menuItem.id)
       return { cart: newCart, total: calculateTotal(newCart, state.menuItems) }
     }),
+  clear: () =>
+    set(() => ({
+      cart: new Map(),
+      menuItems: new Map(),
+      total: 0,
+    })),
 }))
